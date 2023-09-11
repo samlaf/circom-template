@@ -2,6 +2,7 @@ pragma circom 2.0.0;
 
 include "./merkle.circom";
 include "../node_modules/circomlib/circuits/mimc.circom";
+include "../node_modules/circomlib/circuits/mimcsponge.circom";
 
 template Rollup() {
     var levels = 2; // depth of merkle tree
@@ -20,12 +21,11 @@ template Rollup() {
 
     // verify that the sk matches the pkLeaf
     // we check that pkLeaf = mimc(sk) for now... should integrate eddsa sig instead once I understand them
-    component mimc = MiMC7(10);
+    component mimc = MiMC7(91);
     mimc.x_in <== sk;
     mimc.k <== 1;
     pkLeaf <== mimc.out;
 }
 
 
-// component main = Mimic(10,3);
-component main = Rollup();
+component main = MiMCSponge(2, 220, 1);

@@ -7,7 +7,10 @@ help:
 
 potPower = 12
 phase1_ptau_file = powersoftau_phase1/phase1_pow${potPower}.ptau
-circuit_name = rollup
+
+circuit_name = mimc
+
+# variables derived from circuit_name
 circom_file = circuits/${circuit_name}.circom
 generated_files_dir = generated/${circuit_name}
 phase2_ptau_file = ${generated_files_dir}/phase2_pow${potPower}.ptau
@@ -28,13 +31,13 @@ powersoftau-phase1: ## only needs to be run once per potPower
 
 compile-circuit: ## compile to r1cs, prepare pot phase2, and generate zkey and vkey
 	mkdir -p ${generated_files_dir}
-	snarkjs powersoftau prepare phase2 ${phase1_ptau_file} ${phase2_ptau_file}
+	# snarkjs powersoftau prepare phase2 ${phase1_ptau_file} ${phase2_ptau_file}
 	circom --r1cs --wasm --sym ${circom_file} -o ${generated_files_dir}
 	snarkjs groth16 setup ${r1cs_file} ${phase2_ptau_file} ${zkey_file}
 	snarkjs zkey export verificationkey ${zkey_file} ${vkey_file}
 
 # Make sure to create and fill input.json file first, and to have compiled the circuit
-generate-proof: ## calculate the witness given the input, and generate the proof
+prove: ## calculate the witness given the input, and generate the proof
 	snarkjs wtns calculate ${wasm_file} ${input_file} ${witness_file}
 	snarkjs groth16 prove ${zkey_file} ${witness_file} ${proof_file} ${public_input_file}
 
@@ -50,6 +53,9 @@ print-witness: ##
 	snarkjs wtns export json
 	code witness.json
 
+# Getting some wasm error: https://github.com/iden3/circomlib/issues/103
+test: ## 
+	mocha
 
 clean: ## 
 	rm -rf generated/*
