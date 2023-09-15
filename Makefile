@@ -6,11 +6,11 @@ help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 potPower = 12
+phase1_ptau_file0 = powersoftau_phase1/phase1_pow${potPower}_0.ptau
 phase1_ptau_file1 = powersoftau_phase1/phase1_pow${potPower}_1.ptau
-phase1_ptau_file2 = powersoftau_phase1/phase1_pow${potPower}_2.ptau
 phase1_ptau_beacon_file = powersoftau_phase1/phase1_pow${potPower}.beacon.ptau
 
-circuit_name = mimc
+circuit_name = merkle2
 
 # variables derived from circuit_name
 circom_file = circuits/${circuit_name}.circom
@@ -27,9 +27,9 @@ public_input_file = ${generated_files_dir}/${circuit_name}.public.json
 
 powersoftau-phase1: ## only needs to be run once per potPower
 	@echo "Generating powers of tau for bn254 up to power ${potPower}, with 2 contributions"
-	snarkjs powersoftau new bn254 ${potPower} ${phase1_ptau_file1}
-	snarkjs powersoftau contribute ${phase1_ptau_file1} ${phase1_ptau_file2} --name="Second contribution" -e="some random text"
-	snarkjs powersoftau beacon ${phase1_ptau_file2} ${phase1_ptau_beacon_file} 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f 10 -n="Final Beacon"
+	snarkjs powersoftau new bn254 ${potPower} ${phase1_ptau_file0}
+	snarkjs powersoftau contribute ${phase1_ptau_file0} ${phase1_ptau_file1} --name="Second contribution"
+	snarkjs powersoftau beacon ${phase1_ptau_file1} ${phase1_ptau_beacon_file} 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f 10 -n="Final Beacon"
 
 compile-circuit: ## compile to r1cs, prepare pot phase2, and generate zkey and vkey
 	mkdir -p ${generated_files_dir}
