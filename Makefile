@@ -33,7 +33,7 @@ powersoftau-phase1: ## only needs to be run once per potPower
 
 compile-circuit: ## compile to r1cs, prepare pot phase2, and generate zkey and vkey
 	mkdir -p ${generated_files_dir}
-	snarkjs powersoftau prepare phase2 ${phase1_ptau_beacon_file} ${phase2_ptau_file}
+	snarkjs powersoftau prepare phase2 ${phase1_ptau_beacon_file} ${phase2_ptau_file} -v
 	circom --r1cs --wasm --sym ${circom_file} -o ${generated_files_dir}
 	snarkjs groth16 setup ${r1cs_file} ${phase2_ptau_file} ${zkey_file}
 	snarkjs zkey export verificationkey ${zkey_file} ${vkey_file}
