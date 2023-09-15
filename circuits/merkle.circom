@@ -1,53 +1,57 @@
-// copied from tornadocash
+// copied from https://github.com/jbaylina/voting_example/blob/97504f4eb7f5696a964dd1595e83d0e985f900f8/circuits/mt2.circom
 pragma circom 2.0.0;
-include "../node_modules/circomlib/circuits/mimcsponge.circom";
 
-// Computes MiMC([left, right])
-template HashLeftRight() {
-    signal input left;
-    signal input right;
-    signal output hash;
+include "../node_modules/circomlib/circuits/switcher.circom";
+include "../node_modules/circomlib/circuits/poseidon.circom";
+include "../node_modules/circomlib/circuits/bitify.circom";
 
-    component hasher = MiMCSponge(2, 220, 1);
-    hasher.ins[0] <== left;
-    hasher.ins[1] <== right;
-    hasher.k <== 0;
-    hash <== hasher.outs[0];
+template MerkleVerifierLevel() {
+    signal input R;
+    signal input L;
+    signal input selector; // selector=1 flips the two inputs
+    signal output root;
+
+    component sw = Switcher();
+    sw.sel <== selector;
+    sw.L <== L;
+    sw.R <== R;
+
+    // logging with a separator
+    log(1111111111111);
+    log(sw.outL);
+    log(sw.outR);
+
+    component hash = Poseidon(2);
+    hash.inputs[0] <== sw.outL;
+    hash.inputs[1] <== sw.outR;
+    root <== hash.out;
 }
 
-// if s == 0 returns [in[0], in[1]]
-// if s == 1 returns [in[1], in[0]]
-template DualMux() {
-    signal input in[2];
-    signal input s;
-    signal output out[2];
+template MerkleVerifier(nLevels) {
 
-    s * (1 - s) === 0;
-    out[0] <== (in[1] - in[0])*s + in[0];
-    out[1] <== (in[0] - in[1])*s + in[1];
-}
-
-// Verifies that merkle proof is correct for given merkle root and a leaf
-// pathIndices input is an array of 0/1 selectors telling whether given pathElement is on the left or right side of merkle path
-template MerkleTreeChecker(levels) {
+    // leafIndex is the index of the leaf, whose binary representation encodes the path downwards
+    signal input leafIndex;
     signal input leaf;
-    signal input root;
-    signal input pathElements[levels];
-    signal input pathIndices[levels];
+    signal output root;
+    // siblings are the siblings of the nodes in the path from the root to the leaf
+    signal input siblings[nLevels];
 
-    component selectors[levels];
-    component hashers[levels];
+    component n2b = Num2Bits(nLevels);
+    n2b.in <== leafIndex;
 
-    for (var i = 0; i < levels; i++) {
-        selectors[i] = DualMux();
-        selectors[i].in[0] <== i == 0 ? leaf : hashers[i - 1].hash;
-        selectors[i].in[1] <== pathElements[i];
-        selectors[i].s <== pathIndices[i];
+    component levels[nLevels];
 
-        hashers[i] = HashLeftRight();
-        hashers[i].left <== selectors[i].out[0];
-        hashers[i].right <== selectors[i].out[1];
+    for (var i=0; i<nLevels; i++) {
+        levels[i] = MerkleVerifierLevel();
+        levels[i].R <== siblings[i];
+        if (i==0) {
+            levels[i].L <== leaf;
+        } else {
+            levels[i].L <== levels[i-1].root;
+        }
+        // n2b.out[0] is the least significant bit
+        levels[i].selector <== n2b.out[i];
     }
 
-    root === hashers[levels - 1].hash;
+    root <== levels[nLevels-1].root;
 }

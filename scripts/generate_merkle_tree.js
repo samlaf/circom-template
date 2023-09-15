@@ -1,18 +1,18 @@
-const { type } = require("os");
-const path = require("path");
 const { buildPoseidon, } = require("circomlibjs");
-const { utils } = require("ffjavascript");
 
+
+// use this script to generate the merkle tree values
+// and then copy them into inputs/<CIRCUIT>.json 
 async function main() {
     const poseidon = await buildPoseidon();
 
+    // Change these leaves
     var leaves = [1, 2, 3, 4];
     console.log("leaves values", leaves);
-    for (let i=0; i<leaves.length; i++) {
+    for (let i = 0; i < leaves.length; i++) {
         leaves[i] = poseidon([poseidon.F.e(leaves[i])])
     }
     console.log("hashed leaves", leaves.map(x => poseidon.F.toString(x)));
-    const k = 1;
 
     while (leaves.length > 1) {
         left = leaves[0];

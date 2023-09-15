@@ -10,7 +10,7 @@ phase1_ptau_file0 = powersoftau_phase1/phase1_pow${potPower}_0.ptau
 phase1_ptau_file1 = powersoftau_phase1/phase1_pow${potPower}_1.ptau
 phase1_ptau_beacon_file = powersoftau_phase1/phase1_pow${potPower}.beacon.ptau
 
-circuit_name = merkle2
+circuit_name = rollup
 
 # variables derived from circuit_name
 circom_file = circuits/${circuit_name}.circom
